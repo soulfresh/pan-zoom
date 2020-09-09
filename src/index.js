@@ -6,10 +6,8 @@
 
 
 import Impetus from './impetus';
-import wheel from 'mouse-wheel';
 import touchPinch from './touch-pinch';
 import position from 'touch-position';
-import raf from 'raf';
 import debounce from 'lodash.debounce';
 import doubleTap from './double-tap';
 
@@ -27,7 +25,7 @@ function panZoom (target, cb, options) {
     if (options.onEnd) {
       // Delay the end callback so it occurs after
       // the last update.
-      raf(function() {
+      requestAnimationFrame(function() {
         options.onEnd(e);
       });
     }
@@ -96,6 +94,7 @@ function panZoom (target, cb, options) {
       type: o.type || 'mouse',
       srcElement: o.srcElement || target,
       target: target,
+      event: o.event,
       x: x, y: y,
       dx: dx, dy: dy, dz: dz,
       x0: x0, y0: y0,
@@ -163,12 +162,13 @@ function panZoom (target, cb, options) {
 
   impetus = new Impetus({
     source: target,
-    update: function(x, y) {
+    update: function(x, y, event) {
       var rect = target.getBoundingClientRect();
       var tp = touchPosition(rect);
 
       var e = {
         srcElement,
+        event,
         target: target,
         type: 'mouse',
         dx: x - lastX, dy: y - lastY, dz: 0,
@@ -189,7 +189,7 @@ function panZoom (target, cb, options) {
     bounce: options.bounce,
   });
 
-  impetus.on('start', ({originalEvent}) => {
+  impetus.on('start', ({event}) => {
     var rect = target.getBoundingClientRect();
     var tp = touchPosition(rect);
     initDimensions = {
@@ -198,9 +198,10 @@ function panZoom (target, cb, options) {
       px: tp.x / rect.width,
       py: tp.y / rect.height,
     };
-    srcElement = originalEvent.srcElement;
+    srcElement = event.srcElement;
     onStart({
       srcElement,
+      event,
       target: target,
       type: 'mouse',
       dx: 0, dy: 0, dz: 0,
@@ -210,11 +211,11 @@ function panZoom (target, cb, options) {
     });
   });
 
-  impetus.on('end', () => {
-    // console.info('END', x, y);
+  impetus.on('end', ({event}) => {
     var tp = touchPosition();
     onEnd({
       srcElement,
+      event,
       target: target,
       type: 'mouse',
       dx: 0, dy: 0, dz: 0,
@@ -230,18 +231,20 @@ function panZoom (target, cb, options) {
   var wheelListener = null;
   function enableMouseWheel() {
     if (!wheelListener) {
-      return wheel(target, function (dx, dy, dz, e) {
-        if (!isPassive) e.preventDefault();
-
+      const onWheel = e => {
+        if (!options.passive) e.preventDefault();
         var t = updateTracker({
           dx: 0,
           dy: 0,
-          dz: dy,
+          dz: e.deltaY * 0.5,
           srcElement: e.srcElement,
+          event: e,
           type: 'mouse',
         });
         cb(t.event);
-      });
+      };
+      target.addEventListener('wheel', onWheel, {passive: !!options.passive});
+      return onWheel;
     } else {
       return wheelListener;
     }
@@ -249,8 +252,7 @@ function panZoom (target, cb, options) {
 
   function disableMouseWheel() {
     if (wheelListener) {
-      target.removeEventListener('wheel', wheelListener);
-      wheelListener = null;
+      wheelListener = target.removeEventListener('wheel', wheelListener, {passive: true});
     }
   }
 
@@ -283,7 +285,7 @@ function panZoom (target, cb, options) {
     );
   }
 
-  pinch.on('start', function () {
+  pinch.on('start', function (event) {
     var c = currentPinchCenter();
     var d = target.getBoundingClientRect();
     var x = c[0];
@@ -300,19 +302,37 @@ function panZoom (target, cb, options) {
 
       impetus && impetus.pause();
 
-      onStart();
+      onStart({
+        srcElement: event.srcElement,
+        event,
+        target: target,
+        type: 'touch',
+        dx: 0, dy: 0, dz: 0,
+        x: initialCoords.x, y: initialCoords.y,
+        x0: initialCoords.x, y0: initialCoords.y,
+        px0: initialCoords.px0, py0: initialCoords.py0,
+      });
     }
   });
-  pinch.on('end', function () {
+  pinch.on('end', function (last, event) {
     if (!initialCoords) return;
-
-    initialCoords = null;
 
     impetus && impetus.resume();
 
-    onEnd();
+    onEnd({
+      srcElement: event.srcElement,
+      event,
+      target: target,
+      type: 'touch',
+      dx: 0, dy: 0, dz: 0,
+      x: initialCoords.x, y: initialCoords.y,
+      x0: initialCoords.x, y0: initialCoords.y,
+      px0: initialCoords.px0, py0: initialCoords.py0,
+    });
+
+    initialCoords = null;
   });
-  pinch.on('change', function (curr, prev) {
+  pinch.on('change', function (curr, prev, event) {
     if (!pinch.pinching || !initialCoords) return;
 
     var dz = - (curr - prev) * mult;

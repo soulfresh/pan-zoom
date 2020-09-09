@@ -1,4 +1,4 @@
-import EventEmitter from 'eventemitter3';
+import { EventEmitter } from 'events';
 import hasPassive from 'has-passive-events';
 
 /**
@@ -51,6 +51,7 @@ export default class Impetus extends EventEmitter {
     var paused = false;
     var decelerating = false;
     var trackingPoints = [];
+    var lastEvent = null;
 
 
     /**
@@ -204,7 +205,7 @@ export default class Impetus extends EventEmitter {
      * Executes the update function
      */
     function callUpdateCallback() {
-      updateCallback.call(sourceEl, targetX, targetY);
+      updateCallback.call(sourceEl, targetX, targetY, lastEvent);
     }
 
     /**
@@ -234,6 +235,7 @@ export default class Impetus extends EventEmitter {
      * @param  {Object} ev Normalized event
      */
     function onDown(ev) {
+      lastEvent = ev;
       var event = normalizeEvent(ev);
       if (!pointerActive && !paused) {
         pointerActive = true;
@@ -247,7 +249,7 @@ export default class Impetus extends EventEmitter {
 
         addRuntimeEvents();
 
-        emit('start', {x: pointerCurrentX, y: pointerCurrentY, originalEvent: ev});
+        emit('start', {x: pointerCurrentX, y: pointerCurrentY, event: lastEvent});
       }
     }
 
@@ -257,6 +259,7 @@ export default class Impetus extends EventEmitter {
      */
     function onMove(ev) {
       ev.preventDefault();
+      lastEvent = ev;
       var event = normalizeEvent(ev);
 
       if (pointerActive && event.id === pointerId) {
@@ -272,6 +275,7 @@ export default class Impetus extends EventEmitter {
      * @param {Object} ev Normalized event
      */
     function onUp(ev) {
+      lastEvent = ev;
       var event = normalizeEvent(ev);
 
       if (pointerActive && event.id === pointerId) {
@@ -416,7 +420,7 @@ export default class Impetus extends EventEmitter {
         decelerating = true;
         requestAnimFrame(stepDecelAnim);
       } else {
-        emit('end', {x: targetX, y: targetY});
+        emit('end', {x: targetX, y: targetY, event: lastEvent});
       }
     }
 
@@ -482,7 +486,7 @@ export default class Impetus extends EventEmitter {
         requestAnimFrame(stepDecelAnim);
       } else {
         decelerating = false;
-        emit('end', {x: targetX, y: targetY});
+        emit('end', {x: targetX, y: targetY, event: lastEvent});
       }
     }
   }

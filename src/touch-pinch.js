@@ -1,5 +1,5 @@
 import getDistance from 'gl-vec2/distance';
-import EventEmitter from 'eventemitter3';
+import { EventEmitter } from 'events';
 import dprop from 'dprop';
 import eventOffset from 'mouse-event-offset';
 import hasPassive from 'has-passive-events';
@@ -104,7 +104,7 @@ function touchPinch (target) {
         if (!first) {
           var initialDistance = computeDistance();
           ended = false;
-          emitter.emit('start', initialDistance);
+          emitter.emit('start', initialDistance, ev);
           lastDistance = initialDistance;
         }
       }
@@ -125,7 +125,7 @@ function touchPinch (target) {
 
     if (activeCount === 2 && changed) {
       var currentDistance = computeDistance();
-      emitter.emit('change', currentDistance, lastDistance);
+      emitter.emit('change', currentDistance, lastDistance, ev);
       lastDistance = currentDistance;
     }
   }
@@ -140,13 +140,13 @@ function touchPinch (target) {
         activeCount--;
         var otherIdx = idx === 0 ? 1 : 0;
         var otherTouch = fingers[otherIdx] ? fingers[otherIdx].touch : undefined;
-        emitter.emit('lift', removed, otherTouch);
+        emitter.emit('lift', removed, otherTouch, ev);
       }
     }
 
     if (!ended && activeCount !== 2) {
       ended = true;
-      emitter.emit('end');
+      emitter.emit('end', lastDistance, ev);
     }
   }
 

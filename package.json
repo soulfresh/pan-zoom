@@ -1,6 +1,6 @@
 {
   "name": "@thesoulfresh/pan-zoom",
-  "version": "4.1.1",
+  "version": "4.1.2",
   "description": "Pan and zoom events for any element",
   "private": false,
   "license": "MIT",

@@ -2,12 +2,31 @@
   "name": "@thesoulfresh/pan-zoom",
   "version": "4.1.0",
   "description": "Pan and zoom events for any element",
+  "private": false,
+  "license": "MIT",
+  "repository": "https://github.com/soulfresh/pan-zoom",
+  "keywords": [
+    "pan",
+    "zoom",
+    "pinch",
+    "touch",
+    "canvas",
+    "webgl"
+  ],
+  "author": "ΔY <dfcreative@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/soulfresh/pan-zoom/issues"
+  },
+  "homepage": "https://github.com/soulfresh/pan-zoom#readme",
   "main": "no-browser.js",
   "browser": "lib/index.js",
   "files": [
-    "lib",
-    "src"
+    "lib/*",
+    "src/*"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "webpack",
     "clean": "rimraf lib coverage storybook-static",
@@ -19,24 +38,6 @@
     "prepublishOnly": "yarn build",
     "release": "./scripts/release"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/soulfresh/pan-zoom.git"
-  },
-  "keywords": [
-    "pan",
-    "zoom",
-    "pinch",
-    "touch",
-    "canvas",
-    "webgl"
-  ],
-  "author": "ΔY <dfcreative@gmail.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/soulfresh/pan-zoom/issues"
-  },
-  "homepage": "https://github.com/soulfresh/pan-zoom#readme",
   "dependencies": {
     "dprop": "^1.0.0",
     "gl-vec2": "^1.3.0",

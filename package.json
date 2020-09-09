@@ -12,6 +12,7 @@
     "build": "webpack",
     "clean": "rimraf lib coverage storybook-static",
     "test": "budo test.js",
+    "validate": "build",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "yarn clean && build-storybook",
     "deploy-storybook": "storybook-to-ghpages",

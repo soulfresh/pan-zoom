@@ -84,8 +84,8 @@ function panZoom (target, cb, options) {
     var dz = o.dz != null ? o.dz : 0;
 
     // touch x/y
-    var x0 = ie.x0 != null ? ie.x0 : tp.x;
-    var y0 = ie.y0 != null ? ie.y0 : tp.y;
+    var x0 = ie.x0 != null ? ie.x0 : o.x0 != null ? o.x0 : tp.x;
+    var y0 = ie.y0 != null ? ie.y0 : o.y0 != null ? o.y0 : tp.y;
     // touch x/y as percentage
     var px0 = ie.px0 != null ? ie.px0 : x0 / rect.width;
     var py0 = ie.py0 != null ? ie.py0 : y0 / rect.height;
@@ -234,12 +234,15 @@ function panZoom (target, cb, options) {
       const onWheel = e => {
         if (!options.passive) e.preventDefault();
         var rect = target.getBoundingClientRect();
+        const x = e.clientX - rect.x;
+        const y = e.clientY - rect.y;
+
         var t = updateTracker({
           dx: 0,
           dy: 0,
           dz: e.deltaY * 0.5,
-          x0: e.event.clientX - rect.x,
-          y0: e.event.clientY - rect.y,
+          x, y,
+          x0: x, y0: y,
           srcElement: e.srcElement,
           event: e,
           type: 'mouse',

@@ -233,10 +233,13 @@ function panZoom (target, cb, options) {
     if (!wheelListener) {
       const onWheel = e => {
         if (!options.passive) e.preventDefault();
+        var rect = target.getBoundingClientRect();
         var t = updateTracker({
           dx: 0,
           dy: 0,
           dz: e.deltaY * 0.5,
+          x0: e.event.clientX - rect.x,
+          y0: e.event.clientY - rect.y,
           srcElement: e.srcElement,
           event: e,
           type: 'mouse',

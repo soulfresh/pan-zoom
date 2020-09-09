@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+# exit when any command fails
+set -e
+
+# keep track of the last executed command
+trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
+# echo an error message before exiting
+trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
+
+if output=$(git status --porcelain) && [ -z "$output" ]; then
+  echo '\nChecking out the master branch...'
+  git checkout master
+  git pull
+  echo '\nValidating project...'
+  yarn validate
+  yarn config set version-tag-prefix "release/"
+  yarn config set version-git-message "[release][ci skip] prepare release/%s"
+  yarn version
+  version=$(node -e "console.log(require('./package.json').version)")
+  echo '\nPushing release tag...'
+  git push origin master
+  git push origin "release/$version"
+  echo '\nDeploying Storybook...'
+  yarn deploy-storybook
+  echo '\nReady To Publish:'
+  # The publish command fails for some reason when running in this script
+  echo 'Run the following command: npm publish --access public'
+else
+  echo 'uncommitted files. Please commit all files first.'
+  exit 1
+fi

@@ -52,7 +52,6 @@ lsn
 *._[0-9]
 *.ns
 Scripting_*
-docs
 *.pdf
 *.pak
 

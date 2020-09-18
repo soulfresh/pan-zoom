@@ -381,13 +381,10 @@ function panZoom (target, cb, options) {
   let unpanzoom = function () {
     touch.dispose();
 
-    // target.removeEventListener('mousedown', initFn);
-    // target.removeEventListener('touchstart', initFn);
-
     impetus.destroy();
 
     disableMouseWheel();
-    destroyDoubleTap = destroyDoubleTap();
+    if (destroyDoubleTap) destroyDoubleTap = destroyDoubleTap();
 
     pinch.disable();
   };
@@ -403,7 +400,7 @@ function panZoom (target, cb, options) {
   unpanzoom.disableZoom = function() {
     pinch && pinch.disable();
     disableMouseWheel();
-    destroyDoubleTap = destroyDoubleTap();
+    if (destroyDoubleTap) destroyDoubleTap = destroyDoubleTap();
   };
 
   unpanzoom.enableZoom = function() {

@@ -1,0 +1,199 @@
+import { Meta, Story, Canvas } from '@storybook/addon-docs/blocks';
+import { action } from '@storybook/addon-actions';
+import { Example, Div, Logger } from './utils.jsx';
+import {useLockBodyScroll, useToggle} from 'react-use';
+import panzoom from '../index';
+
+<Meta title="pan-zoom" />
+
+# pan-zoom
+
+This is a fork of [pan-zoom](https://www.npmjs.com/package/pan-zoom) with bug fixes,
+feature updates and a backwards compatible API with the original.
+
+Panning and zooming events for any target.
+May come handy for webgl, canvas, svg, images or pure html manipulations.
+Handles mobile pinch-zoom, drag and scroll interactions, double tap/click interactions
+and provides inertial movement.
+
+For a fully featured DOM element pan/zoom library, see [@thesoulfresh/pan-z](https://soulfresh.github.io/pan-z/?path=/docs/pan-z--pan-z)
+
+[![npm install pan-zoom](https://nodei.co/npm/pan-zoom.png?mini=true)](https://npmjs.org/package/pan-zoom/)
+
+```js
+import panzoom from 'pan-zoom';
+
+let unpanzoom = panzoom(
+  // Target element to pan/zoom
+  document.body,
+  // Update callback on guesture updates.
+  e => {
+    // e contains all the params related to the interaction
+
+    // pan deltas
+    e.dx;
+    e.dy;
+
+    // zoom delta
+    e.dz;
+
+    // coordinates of the center
+    e.x;
+    e.y;
+
+    // type of interaction: mouse or touch
+    e.type;
+
+    // target element event is applied to
+    e.target;
+
+    // original element event started from
+    e.srcElement;
+
+    // original native event object. For inertial updates, this
+    // event object may be reused from a previous update
+    // due to the fact that we are simulating the inertial changes.
+    e.event;
+
+    // initial coordinates of interaction
+    e.x0;
+    e.y0;
+
+    // initial coordinates of interaction as a percentage of
+    // the target element dimensions (a number between 0-1).
+    // This is useful if the demensions of the pan-zoom element
+    // change between updates.
+    e.px0;
+    e.py0;
+
+    requestAnimationFrame(() => {
+      // While not a requirement, it is recommended that your
+      // code handles UI updates in a `requestAnimationFrame`.
+      // Previous versions of this library did this internally
+      // but that has been removed to give library users more
+      // control over when and how `requestAnimationFrame` is used.
+    });
+  },
+  // Additional configuration options...
+  {
+    // A callback that will be called when a new guesture starts.
+    // It receives the same event object as the update callback above.
+    onStart: e => {},
+
+    // A callback that will be called when a guesture ends.
+    // It receives the same event object as the update callback above.
+    onEnd: e => {},
+
+    // A callback that will be called when a double tap/click gesture
+    // occurs. It will also receive the same event object as the
+    // update callback. `dz` will always be 0 so that you can determine
+    // how double tap events should be treated.
+    onDoubleTap: e => {},
+
+    // By default, this library prevents bubbling of some gestures (ex. 'wheel')
+    // for your ease of use. You can allow these events to bubble by setting
+    // the passive option to `false`.
+    passive: false,
+  }
+);
+
+// you can pause/resume pan or zoom functionality at runtime if you ever need.
+unpanzoom.disablePan()
+unpanzoom.disableZoom()
+unpanzoom.enablePan()
+unpanzoom.enableZoom()
+
+// call to completely remove panzoom handler from the target
+unpanzoom()
+```
+
+### Example Usage
+
+> The following examples use React for illustration purposes only.
+> This library is not dependent on React.
+
+<Canvas>
+  <Story name="Example Usage">
+    <Example>{() => {
+      const [locked, setLocked] = React.useState(false);
+      const [logs, setLogs] = React.useState([]);
+      const [pannable, setPannable] = React.useState(true);
+      const [zoomable, setZoomable] = React.useState(true);
+      const element = React.useRef();
+      const pz = React.useRef();
+      const actionLog = action('update');
+      const log = (e) => {
+        console.log('EVENT', e);
+        actionLog(event);
+        setLogs(l => [...l, e]);
+      };
+      //
+      const togglePan = () => {
+        if (pz.current) {
+          if (pannable) {
+            pz.current.disablePan();
+            setPannable(false);
+          } else {
+            pz.current.enablePan();
+            setPannable(true);
+          }
+        }
+      };
+      const toggleZoom = () => {
+        if (pz.current) {
+          if (zoomable) {
+            pz.current.disableZoom();
+            setZoomable(false);
+          } else {
+            pz.current.enableZoom();
+            setZoomable(true);
+          }
+        }
+      };
+      //
+      React.useEffect(() => {
+        // Initialize PanZoom
+        pz.current = panzoom(element.current, event => {
+          // Lock document body scrolling and display the event data.
+          setLocked(true);
+          log(event);
+        }, {
+          // Listen to gesture end events to re-allow document
+          // body scrolling.
+          onEnd: () => setLocked(false),
+        });
+        // Destroy PanZoom when finished with it.
+        return () => {
+          pz.current = pz.current();
+        };
+      }, []);
+      //
+      useLockBodyScroll(locked);
+      //
+      return (
+        <>
+          <Div
+            ref={element}
+            style={{
+              border: '2px solid red',
+              height: '200px',
+              display: 'Flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              userSelect: 'none',
+              touchAction: 'none',
+            }}
+          >
+            Scroll, pinch or drag me!
+          </Div>
+          <Div>
+            <button onClick={togglePan} >{pannable ? 'Disable' : 'Enable'} Pan</button>
+            <button onClick={toggleZoom}>{zoomable ? 'Disable' : 'Enable'} Zoom</button>
+          </Div>
+          <Logger logs={logs} />
+          <button onClick={() => setLogs([])}>Clear Logs</button>
+        </>
+      );
+    }}</Example>
+  </Story>
+</Canvas>

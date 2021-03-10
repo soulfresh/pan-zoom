@@ -291,7 +291,7 @@ function panZoom (target, cb, options) {
     );
   }
 
-  pinch.on('start', function (event) {
+  pinch.on('start', function (distance, event) {
     var c = currentPinchCenter();
     var d = target.getBoundingClientRect();
     var x = c[0];
@@ -320,6 +320,7 @@ function panZoom (target, cb, options) {
       });
     }
   });
+
   pinch.on('end', function (last, event) {
     if (!initialCoords) return;
 
@@ -338,6 +339,7 @@ function panZoom (target, cb, options) {
 
     initialCoords = null;
   });
+
   pinch.on('change', function (curr, prev, event) {
     if (!pinch.pinching || !initialCoords) return;
 
@@ -345,6 +347,7 @@ function panZoom (target, cb, options) {
 
     cb({
       srcElement: target,
+      event,
       target: target,
       type: 'touch',
       dx: 0, dy: 0, dz: dz,
